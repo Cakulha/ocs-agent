@@ -1,0 +1,21 @@
+[
+  {
+    "name": "ocs-agent",
+    "homepage": "http://localhost:3000",
+    "url": "http://localhost:3000/api/answer",
+    "method": "post",
+    "contentType": "json",
+    "type": "fetch",
+    "headers": {},
+    "data": {
+      "question": "${title}",
+      "options": {
+        "handler": "return (env)=>env.options?.split('\\n')"
+      },
+      "type": {
+        "handler": "return (env)=> env.type === 'single' ? 'single' : env.type === 'multiple' ? 'multiple' : env.type === 'judgement' ? 'judgement' : env.type === 'completion' ? 'completion' : undefined"
+      }
+    },
+    "handler": "return (res)=> res.code === 0 ? [res.data.question, res.data.answer] : undefined"
+  }
+]

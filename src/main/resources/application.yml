@@ -1,0 +1,9 @@
+server:
+  port: 3000
+
+llm:
+  api-key: ${API_KEY:}
+  endpoint: https://apihub.agnes-ai.com/v1/chat/completions
+  model: agnes-2.0-flash
+  timeout-seconds: 60
+  thinking: false

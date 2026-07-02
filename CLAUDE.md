@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**ocs-agent** is a Spring Boot backend AI question-answering service for the OCS (Online Course Script) ecosystem. It integrates with Chinese online course platforms (学习通/超星) via a userscript frontend, accepting questions and returning answers through the **Agnes 2.0 Flash** LLM.
+**ocs-agent** is a Spring Boot backend AI question-answering service for the OCS (Online Course Script) ecosystem. It integrates with Chinese online course platforms (学习通/超星) via a userscript frontend, accepting questions and returning answers through the LLM.
 
-**Tech stack**: Java 21, Spring Boot 3.4, Maven 3.9, Agnes 2.0 Flash API (OpenAI-compatible)
+**Tech stack**: Java 21, Spring Boot 3.4, Maven 3.9
 
 ## Commands
 
@@ -23,8 +23,8 @@ mvn test -Dtest=AnswerParserTest
 # Package as JAR
 mvn clean package
 
-# Run service locally (requires AGNES_API_KEY)
-AGNES_API_KEY=your-key mvn spring-boot:run
+# Run service locally (requires API_KEY)
+API_KEY=your-key mvn spring-boot:run
 ```
 
 ## Project Structure
@@ -50,7 +50,7 @@ ocs-agent/
           QuestionType.java                              # Enum: single/multiple/judgement/completion
         service/
           AnswerService.java                             # Orchestration: prompt → LLM → parse
-          LlmClient.java                                 # HTTP client for Agnes 2.0 Flash API
+          LlmClient.java                                 # HTTP client for LLM
           AnswerParser.java                              # Parse LLM output by question type
         config/
           LlmConfig.java                                 # @ConfigurationProperties for LLM settings
@@ -81,14 +81,14 @@ ocs-agent/
 - **Thinking**: Enabled via `chat_template_kwargs.enable_thinking: true`
 - **Timeout**: 60s (configurable)
 
-Configure via `application.yml` or environment variable `AGNES_API_KEY`.
+Configure via `application.yml` or environment variable `API_KEY`.
 
 ## Architecture Flow
 
 ```
 OCS 前端 → POST /api/answer → AnswerController → AnswerService
                                          ↓
-                              LlmClient → Agnes 2.0 Flash API
+                              LlmClient → LLM API
                                          ↓
                               AnswerParser (parse by type)
                                          ↓

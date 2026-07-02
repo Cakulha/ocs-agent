@@ -2,7 +2,7 @@
 
 > AI 驱动的在线课程自动答题后端服务
 
-OCS Agent 是基于 Spring Boot 的后端服务，为 [OCS (Online Course Script)](https://github.com/murongpingcai/ocs) 前端提供 AI 自动答题能力。它接收前端传递的题目参数，调用 **Agnes 2.0 Flash** 大模型推理，解析模型回复后返回格式化答案。
+OCS Agent 是基于 Spring Boot 的后端服务，为 [OCS (Online Course Script)](https://github.com/murongpingcai/ocs) 前端提供 AI 自动答题能力。它接收前端传递的题目参数，调用大模型推理，解析模型回复后返回格式化答案。
 
 支持单选题、多选题、判断题和填空题四种题型。
 
@@ -13,7 +13,6 @@ OCS Agent 是基于 Spring Boot 的后端服务，为 [OCS (Online Course Script
 | Java | 21 |
 | Spring Boot | 3.4.5 |
 | Maven | 3.9+ |
-| LLM | Agnes 2.0 Flash (`agnes-2.0-flash`) |
 
 ## 快速开始
 
@@ -21,7 +20,7 @@ OCS Agent 是基于 Spring Boot 的后端服务，为 [OCS (Online Course Script
 
 - JDK 21+
 - Maven 3.9+
-- 有效的 Agnes API Key
+- 有效的 API Key
 
 ### 配置
 
@@ -49,11 +48,11 @@ mvn clean compile
 mvn test
 
 # 启动服务
-AGNES_API_KEY=your-key mvn spring-boot:run
+API_KEY=your-key mvn spring-boot:run
 
 # 或打包后运行
 mvn clean package
-AGNES_API_KEY=your-key java -jar target/ocs-agent-1.0.0.jar
+API_KEY=your-key java -jar target/ocs-agent-1.0.0.jar
 ```
 
 ### 验证接口
@@ -115,7 +114,7 @@ OCS 前端脚本 → POST /api/answer → AnswerController
                                       ↓
                                AnswerService (编排)
                                       ↓
-                           LlmClient → Agnes 2.0 Flash API
+                           LlmClient → LLM API
                                       ↓
                            AnswerParser (按题型解析)
                                       ↓

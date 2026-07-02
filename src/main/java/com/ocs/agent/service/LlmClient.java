@@ -34,7 +34,7 @@ public class LlmClient {
     }
 
     /**
-     * Call Agnes 2.0 Flash LLM with the given system prompt and user message.
+     * Call LLM with the given system prompt and user message.
      *
      * @return the LLM response content string
      */

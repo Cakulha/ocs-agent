@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.TimeUnit;
+
 @Service
 public class AnswerService {
 
@@ -17,7 +19,7 @@ public class AnswerService {
 
     private static final String SYSTEM_PROMPT = """
             你是一个在线课程答题助手。请根据题目和选项，给出正确答案。
-            根据题目的的题型，严格按照以下格式回答，不要输出任何解释或其他内容：
+            根据题型，严格按照以下格式回答，不要输出任何解释或其他内容：
             
             - 单选题：只输出一个选项字母，如 "A"
             - 多选题：用 # 连接多个选项字母，如 "A#C#D"
@@ -37,15 +39,15 @@ public class AnswerService {
         request.normalize();
         try {
             String userMessage = buildUserMessage(request);
-            log.info("Processing question: type= {}, question= {}",
-                    request.getType(), truncate(request.getQuestion(), 50));
-            log.info("userMessage=\n{}", userMessage);
+            log.debug("userMessage=\n{}", userMessage);
 
+            long beforeLLMCall = System.currentTimeMillis();
             String llmResponse = llmClient.call(SYSTEM_PROMPT, userMessage);
-            log.info("LLM raw response: {}", llmResponse);
-
             String parsedAnswer = answerParser.parse(llmResponse, request.getType(), request.getOptions());
-            log.info("Parsed answer: {}", parsedAnswer);
+            long afterLLMCall = System.currentTimeMillis();
+
+            log.debug("LLM raw answer: {}， Parsed answer: {}", llmResponse, parsedAnswer);
+            log.info("\n{}\n答案: {}\n耗时: {}s", userMessage, parsedAnswer, TimeUnit.MILLISECONDS.toSeconds(afterLLMCall - beforeLLMCall));
             return AnswerResponse.success(request.getQuestion(), parsedAnswer);
 
         } catch (Exception e) {
@@ -58,7 +60,7 @@ public class AnswerService {
         StringBuilder sb = new StringBuilder();
         sb.append("题目：").append(request.getQuestion()).append("\n");
 
-        if (request.getOptions() != null && !request.getOptions().isEmpty()) {
+        if ((request.getType() == QuestionType.single || request.getType() == QuestionType.multiple) && request.getOptions() != null && !request.getOptions().isEmpty()) {
             sb.append("选项：\n");
             for (String option : request.getOptions()) {
                 sb.append(option).append("\n");
@@ -76,9 +78,5 @@ public class AnswerService {
             case judgement -> "判断题";
             case completion -> "填空题";
         };
-    }
-
-    private String truncate(String text, int maxLen) {
-        return text.length() <= maxLen ? text : text.substring(0, maxLen) + "...";
     }
 }

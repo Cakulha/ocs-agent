@@ -98,7 +98,7 @@ server:
   port: 3000                    # 服务端口
 
 llm:
-  api-key: ${AGNES_API_KEY:your-api-key-here}  # API Key（支持环境变量注入）
+  api-key: ${API_KEY:your-api-key-here}  # API Key（支持环境变量注入）
   endpoint: https://apihub.agnes-ai.com/v1/chat/completions  # API 地址
   model: agnes-2.0-flash        # 模型名称
   timeout-seconds: 60           # HTTP 超时时间

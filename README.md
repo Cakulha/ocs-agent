@@ -2,7 +2,7 @@
 
 > AI 驱动的在线课程自动答题后端服务
 
-OCS Agent 是基于 Spring Boot 的后端服务，为 [OCS (Online Course Script)](https://github.com/murongpingcai/ocs) 前端提供 AI 自动答题能力。它接收前端传递的题目参数，调用大模型推理，解析模型回复后返回格式化答案。
+OCS Agent 是基于 Spring Boot 的后端服务，为 [OCS (Online Course Script)](https://github.com/ocsjs/ocsjs) 前端提供 AI 自动答题能力。它接收前端传递的题目参数，调用大模型推理，解析模型回复后返回格式化答案。
 
 支持单选题、多选题、判断题和填空题四种题型。
 

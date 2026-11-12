@@ -7,6 +7,8 @@ import com.ocs.agent.service.AnswerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,6 +29,19 @@ public class AnswerController {
     public AnswerController(AnswerService answerService, ObjectMapper objectMapper) {
         this.answerService = answerService;
         this.objectMapper = objectMapper;
+    }
+
+    /**
+     * Status endpoint for the OCS script's answerer connectivity probe.
+     *
+     * The OCS frontend probes answerer URLs with a HEAD request first
+     * (falling back to GET on 405/501). Since Spring MVC routes HEAD
+     * to GET handlers automatically, this method makes the probe succeed
+     * with 200 without invoking the LLM.
+     */
+    @GetMapping("/api/answer")
+    public ResponseEntity<Void> status() {
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/api/answer")

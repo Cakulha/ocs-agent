@@ -13,4 +13,6 @@ llm:
   # 模型名称，例如 your-model-name
   model: ${LLM_MODEL:}
   timeout-seconds: ${LLM_TIMEOUT_SECONDS:60}
+  # 单次请求最大生成 token 数（思考模式需要更大预算，如 4096）
+  max-tokens: ${LLM_MAX_TOKENS:1024}
   thinking: ${LLM_THINKING:false}

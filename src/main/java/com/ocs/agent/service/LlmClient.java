@@ -95,7 +95,7 @@ public class LlmClient {
         body.put("messages", List.of(systemMessage, userMessagePart));
 
         body.put("stream", false);
-        body.put("max_tokens", 1024);
+        body.put("max_tokens", config.getMaxTokens());
 
         // 始终显式传递 enable_thinking：DSV4.1 等模型默认开启思考模式，
         // 若不显式关闭，推理会耗尽 max_tokens 导致 content 为空

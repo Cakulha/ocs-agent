@@ -20,6 +20,9 @@ public class LlmConfig {
     /** HTTP timeout in seconds */
     private int timeoutSeconds = 60;
 
+    /** Max tokens for LLM response (thinking mode needs a larger budget) */
+    private int maxTokens = 1024;
+
     /** Enable thinking mode for complex reasoning */
     private boolean thinking = false;
 }

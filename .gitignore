@@ -42,3 +42,6 @@ Thumbs.db
 # Application secrets (never commit API keys)
 .env
 *.env
+
+# Python virtual environment
+.venv/

@@ -97,9 +97,9 @@ public class LlmClient {
         body.put("stream", false);
         body.put("max_tokens", 1024);
 
-        if (config.isThinking()) {
-            body.put("chat_template_kwargs", Map.of("enable_thinking", true));
-        }
+        // 始终显式传递 enable_thinking：DSV4.1 等模型默认开启思考模式，
+        // 若不显式关闭，推理会耗尽 max_tokens 导致 content 为空
+        body.put("chat_template_kwargs", Map.of("enable_thinking", config.isThinking()));
 
         return body;
     }

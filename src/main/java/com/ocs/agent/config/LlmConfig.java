@@ -8,18 +8,18 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties(prefix = "llm")
 public class LlmConfig {
-    /** Agnes API endpoint URL */
-    private String endpoint = "https://apihub.agnes-ai.com/v1/chat/completions";
+    /** LLM API endpoint URL (OpenAI-compatible) */
+    private String endpoint;
 
     /** API Key for Bearer authentication */
     private String apiKey;
 
     /** Model name */
-    private String model = "agnes-2.0-flash";
+    private String model;
 
     /** HTTP timeout in seconds */
     private int timeoutSeconds = 60;
 
     /** Enable thinking mode for complex reasoning */
-    private boolean thinking = true;
+    private boolean thinking = false;
 }

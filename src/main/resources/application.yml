@@ -1,9 +1,16 @@
+spring:
+  config:
+    # 加载项目根目录下的 .env 文件（文件不存在时忽略），可通过它覆盖下方默认值
+    import: "optional:file:.env[.properties]"
+
 server:
-  port: 3000
+  port: ${SERVER_PORT:3000}
 
 llm:
-  api-key: ${API_KEY:}
-  endpoint: https://apihub.agnes-ai.com/v1/chat/completions
-  model: agnes-2.0-flash
-  timeout-seconds: 60
-  thinking: false
+  api-key: ${LLM_API_KEY:${API_KEY:}}
+  # OpenAI 兼容端点，例如 https://your-llm-host/v1/chat/completions
+  endpoint: ${LLM_ENDPOINT:}
+  # 模型名称，例如 your-model-name
+  model: ${LLM_MODEL:}
+  timeout-seconds: ${LLM_TIMEOUT_SECONDS:60}
+  thinking: ${LLM_THINKING:false}

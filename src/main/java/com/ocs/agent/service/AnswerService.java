@@ -25,6 +25,10 @@ public class AnswerService {
             - 多选题：用 # 连接多个选项字母，如 "A#C#D"
             - 判断题：输出 "正确" 或 "错误"
             - 填空题：直接输出答案文本
+            
+            题目或选项中可能出现 [图片N] 占位符（如 [图片1]、[图片2]），表示此处有一张图片。
+            图片会以附件形式随消息一并提供，按顺序与占位符编号对应（[图片1] 对应第一张附件图片）。
+            请结合图片内容理解题目并作答；若答案本身包含图片，请在答案中保留 [图片N] 占位符。
             """;
 
     public AnswerService(LlmClient llmClient, AnswerParser answerParser) {
@@ -42,7 +46,11 @@ public class AnswerService {
             log.debug("userMessage=\n{}", userMessage);
 
             long beforeLLMCall = System.currentTimeMillis();
-            String llmResponse = llmClient.call(SYSTEM_PROMPT, userMessage);
+            String llmResponse = llmClient.call(SYSTEM_PROMPT, userMessage, request.getImages());
+            if (llmResponse == null || llmResponse.isBlank()) {
+                log.warn("LLM returned empty content for question: {}", request.getQuestion());
+                return AnswerResponse.notFound();
+            }
             String parsedAnswer = answerParser.parse(llmResponse, request.getType(), request.getOptions());
             long afterLLMCall = System.currentTimeMillis();
 

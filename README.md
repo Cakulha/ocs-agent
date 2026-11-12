@@ -4,7 +4,7 @@
 
 OCS Agent 是基于 Spring Boot 的后端服务，为 [OCS (Online Course Script)](https://github.com/ocsjs/ocsjs) 前端提供 AI 自动答题能力。它接收前端传递的题目参数，调用大模型推理，解析模型回复后返回格式化答案。
 
-支持单选题、多选题、判断题和填空题四种题型。
+支持单选题、多选题、判断题和填空题四种题型。开启 OCS「图片题优化」后，支持图片题（多模态）。
 
 ## 技术栈
 
@@ -20,22 +20,46 @@ OCS Agent 是基于 Spring Boot 的后端服务，为 [OCS (Online Course Script
 
 - JDK 21+
 - Maven 3.9+
-- 有效的 API Key
+- 有效的 LLM API Key（公司内部 OpenAI 兼容服务）
 
 ### 配置
 
-在 `src/main/resources/application.yml` 中配置 LLM 连接信息，或通过环境变量 `API_KEY` 注入 API Key：
+支持两种配置方式：
+
+1. **`.env` 文件（推荐）**：在项目根目录创建 `.env` 文件（参考 `.env.example`），服务启动时自动加载：
+
+```bash
+cp .env.example .env
+# 编辑 .env 填入真实配置
+```
+
+```properties
+LLM_API_KEY=your-api-key
+LLM_ENDPOINT=https://your-llm-host/v1/chat/completions
+LLM_MODEL=your-model-name
+LLM_TIMEOUT_SECONDS=60
+LLM_THINKING=false
+SERVER_PORT=3000
+```
+
+2. **环境变量**：直接通过环境变量注入（优先级高于 `.env` 文件）：
+
+```bash
+export LLM_API_KEY=your-api-key
+```
+
+`src/main/resources/application.yml` 中的默认值（endpoint 和 model 无内置默认值，必须通过 `.env` 或环境变量提供）：
 
 ```yaml
 server:
-  port: 3000
+  port: ${SERVER_PORT:3000}
 
 llm:
-  api-key: ${API_KEY}
-  endpoint: https://apihub.agnes-ai.com/v1/chat/completions
-  model: agnes-2.0-flash
-  timeout-seconds: 60
-  thinking: false
+  api-key: ${LLM_API_KEY:${API_KEY:}}
+  endpoint: ${LLM_ENDPOINT:}
+  model: ${LLM_MODEL:}
+  timeout-seconds: ${LLM_TIMEOUT_SECONDS:60}
+  thinking: ${LLM_THINKING:false}
 ```
 
 ### 构建与运行
@@ -48,11 +72,11 @@ mvn clean compile
 mvn test
 
 # 启动服务
-API_KEY=your-key mvn spring-boot:run
+mvn spring-boot:run
 
 # 或打包后运行
 mvn clean package
-API_KEY=your-key java -jar target/ocs-agent-1.0.0.jar
+java -jar target/ocs-agent-1.0.0.jar
 ```
 
 ### 验证接口
@@ -82,6 +106,7 @@ curl -X POST http://localhost:3000/api/answer \
 | `question` | `string` | 是 | 题目文本 |
 | `options` | `string[]` | 是 | 选项数组，如 `["A. 为人民服务"]`；填空题传 `[]` |
 | `type` | `string` | 否 | `single` / `multiple` / `judgement` / `completion` |
+| `images` | `string[]` | 否 | 图片题：base64 data URL 数组，顺序对应题目中 `[图片N]` 占位符 |
 
 **成功响应**
 
@@ -137,6 +162,8 @@ ocs-agent/
       AnswerParser.java                 # 答案解析器
     config/LlmConfig.java               # LLM 配置属性
   src/main/resources/application.yml    # 服务配置
+  .env                                  # 本地环境变量配置（不提交，参考 .env.example）
+  .env.example                          # 环境变量配置模板
   src/test/java/.../AnswerParserTest.java  # 单元测试
   .docs/
     DESIGN.md                           # 设计文档

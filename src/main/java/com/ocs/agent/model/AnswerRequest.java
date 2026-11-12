@@ -9,6 +9,8 @@ public class AnswerRequest {
     private String question;
     private List<String> options;
     private QuestionType type;
+    /** base64 图片数组（data URL 格式），顺序对应题目中的 [图片N] 占位符，无图片时为 null */
+    private List<String> images;
 
     /**
      * Normalize the request before processing:
@@ -37,5 +39,10 @@ public class AnswerRequest {
                 options = prefixed;
             }
         }
+    }
+
+    /** 是否携带图片（用于判断是否走多模态请求） */
+    public boolean hasImages() {
+        return images != null && !images.isEmpty();
     }
 }

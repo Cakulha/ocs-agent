@@ -25,6 +25,9 @@
 POST {your-server}/api/answer
 ```
 
+> 后端同时提供 `GET /api/answer` 状态端点（Spring MVC 自动支持 HEAD）。
+> OCS 脚本保存题库配置时会用 HEAD/GET 探测接口连通性，该端点返回 200 即显示"连接成功"，不会触发 LLM 调用。
+
 ### 请求头
 
 | Header | Value | 说明 |
@@ -46,6 +49,19 @@ POST {your-server}/api/answer
 }
 ```
 
+带图片的题目（需在 OCS 中开启「图片题优化」）：
+
+```json
+{
+  "question": "如图所示，图中显示的颜色是？ [图片1]",
+  "options": ["A. 红色", "B. 蓝色", "C. 绿色", "D. 黄色"],
+  "type": "single",
+  "images": [
+    "data:image/png;base64,iVBORw0KGgo..."
+  ]
+}
+```
+
 ### 字段说明
 
 | 字段 | 类型 | 必填 | 说明 |
@@ -53,6 +69,7 @@ POST {your-server}/api/answer
 | `question` | `string` | ✅ 是 | 题目文本。由前端从 DOM 提取，已做清理（去除了冗余题型标签、多余空格/换行等） |
 | `options` | `string[]` | ✅ 是 | 选项文本数组。**仅当 `type` 为 `single` / `multiple` / `judgement` 时携带**；填空题 (`completion`) 时为空数组 `[]` |
 | `type` | `string` | ❌ 否 | 题目类型，枚举值见下表 |
+| `images` | `string[]` | ❌ 否 | base64 图片数组（data URL 格式，如 `data:image/png;base64,...`）。开启图片题优化后由前端注入，顺序与题目中 `[图片N]` 占位符编号对应；无图片时为空数组或省略 |
 
 ### 题目类型枚举
 
@@ -72,6 +89,19 @@ POST {your-server}/api/answer
   4. 执行 `StringUtils.nospace()`（多个连续空格合并为一个）
   5. 执行 `removeRedundantWords()`（按配置移除"【单选题】""（多选题）"等冗余前缀）
 - `options` 中每个元素的格式为 `"{字母}. {选项内容}"`，例如 `"A. 为人民服务"`，字母与内容之间有一个空格
+
+### 图片题支持（图片题优化）
+
+当用户在 OCS「通用 → 全局设置 → 高级设置」中开启**图片题优化**后，前端会把题目/选项中的图片下载并转为 base64 data URL，注入请求的 `images` 字段；同时题目/选项文本中的图片 URL 会被替换为 `[图片N]` 占位符（如 `[图片1]`），`images` 数组顺序与占位符编号一一对应。
+
+后端收到带 `images` 的请求后，会将图片以 OpenAI 多模态格式（`image_url` content parts）随题目文本一并发给大模型，模型结合图片内容作答。
+
+注意事项：
+
+- 未开启图片题优化或题目无图片时，`images` 为空数组或缺失，后端按纯文本请求处理，行为与之前完全一致
+- 答案中若包含 `[图片N]` 占位符，前端会自动将其还原为图片 URL 用于选项匹配，后端无需处理
+- 图片下载失败时前端会跳过该图片，占位符编号保持连续
+- 需要大模型支持多模态（vision）能力，否则带图片的请求会失败或得到无意义回答
 
 ## 三、响应
 
@@ -268,9 +298,14 @@ Content-Type: application/json
     "type": "fetch",
     "headers": {},
     "data": {
-      "question": "${title}",
+      "question": {
+        "handler": "return (env)=>env.suggestion_title || env.title"
+      },
       "options": {
-        "handler": "return (env)=>env.options?.split('\\n')"
+        "handler": "return (env)=>(env.suggestion_options || env.options)?.split('\\n')"
+      },
+      "images": {
+        "handler": "return (env)=>env.images"
       },
       "type": {
         "handler": "return (env)=> env.type === 'single' ? 'single' : env.type === 'multiple' ? 'multiple' : env.type === 'judgement' ? 'judgement' : env.type === 'completion' ? 'completion' : undefined"
@@ -286,10 +321,13 @@ Content-Type: application/json
 | 字段 | 说明 |
 |------|------|
 | `url` | 你的后端接口地址 |
-| `data.question` | 使用 `${title}` 占位符，前端会自动替换为题目文本 |
-| `data.options.handler` | 将前端传入的选项字符串（`\n` 分隔）拆分为数组 |
+| `data.question` | 优先使用 `env.suggestion_title`（图片替换为 `[图片N]` 占位符后的标题），无图片时回退 `env.title` |
+| `data.options.handler` | 优先使用 `env.suggestion_options`（选项图片替换为占位符后），回退 `env.options`，再按 `\n` 拆分为数组 |
+| `data.images.handler` | 返回 `env.images`（base64 图片数组）。**必须用 handler 而非 `"${images}"` 占位符**——占位符替换是字符串 replace，数组会被逗号拼接损坏 base64 |
 | `data.type.handler` | 将题目类型透传给后端（也可自行修改映射逻辑） |
 | `handler` | 响应解析器，将后端返回格式转换为 `[题目, 答案]` 格式 |
+
+> **图片题优化兼容性**：OCS 通过检查题库配置是否引用 `images` / `suggestion_title` / `suggestion_options` 来判断是否支持图片题优化。上述配置中的 handler 引用了这些字段，因此不会再出现"当前题库配置暂不支持图片、公式等题目处理"的警告。
 
 ## 六、注意事项
 
@@ -299,3 +337,4 @@ Content-Type: application/json
 4. **线程数**：默认同时搜 1 题（可在 OCS 设置中调整为最多 3 题并发）
 5. **域名白名单**：如果使用油猴脚本，需在脚本头部 `@connect` 中添加你的域名，或安装全域名通用版本
 6. **答案分隔符**：多选题答案必须用分隔符连接为字符串，不要用 JSON 数组
+7. **图片题**：需在 OCS「通用 → 全局设置 → 高级设置」中开启「图片题优化」，并使用第五章的题库配置；后端所用大模型需支持多模态（vision）

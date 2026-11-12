@@ -12,7 +12,7 @@
         "handler": "return (env)=>env.suggestion_title || env.title"
       },
       "options": {
-        "handler": "return (env)=>(env.suggestion_options || env.options)?.split('\\n')"
+        "handler": "return (env)=>(env.suggestion_options || env.options)?.split('\\n').filter(s=>s.trim()!=='')"
       },
       "images": {
         "handler": "return (env)=>env.images"
